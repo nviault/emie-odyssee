@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>L'Odyssée de l'Île d'Émie</title>
+    <link href="https://fonts.cdnfonts.com/css/open-dyslexic" rel="stylesheet">
+    <style>
+        /* Thème Animal Crossing Kawaii */
+        :root {
+            --bg-color: #FFFDD0;
+            --accent-blue: #A2D2FF;
+            --accent-pink: #FFC2D1;
+            --text-color: #5D5D5D;
+            --font-main: 'Open-Dyslexic', sans-serif;
+            --island-green: #D1FFA2;
+            --island-water: #7CE6DF; /* Turquoise */
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: var(--font-main);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            touch-action: manipulation;
+            font-size: 24pt; /* Taille minimale demandée */
+        }
+
+        #app {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Intro Overlay */
+        #intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+            border: 10px solid var(--accent-blue);
+        }
+
+        /* L'Île */
+        #island-container {
+            width: 100%;
+            height: 65%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to bottom, #A2D2FF 0%, #7CE6DF 100%);
+            position: relative;
+        }
+
+        #island-main {
+            width: 90%;
+            height: 80%;
+            background: var(--island-green);
+            border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+            position: relative;
+            box-shadow: 0 30px 0 #b8e689, 0 50px 20px rgba(0,0,0,0.1);
+            border: 5px solid #ffffff55;
+            transition: transform 0.5s ease;
+            /* Effet texture herbe douce */
+            background-image: radial-gradient(circle at 20% 30%, #e1ffc2 0%, transparent 20%),
+                              radial-gradient(circle at 80% 70%, #e1ffc2 0%, transparent 20%);
+        }
+
+        .island-object {
+            position: absolute;
+            font-size: 3rem;
+            filter: drop-shadow(2px 2px 0px white);
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: default;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 40px 20px;
+            text-align: center;
+            z-index: 100;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--accent-pink);
+            text-shadow: 3px 3px 0px #fff, -1px -1px 0px #fff, 1px -1px 0px #fff, -1px 1px 0px #fff;
+            margin: 0;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.05));
+        }
+
+        .btn {
+            background-color: var(--accent-blue);
+            border: none;
+            border-radius: 60px;
+            padding: 25px 50px;
+            font-size: 1.8rem;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 10px 0 #89b8e6;
+            transition: transform 0.1s, box-shadow 0.1s;
+            margin: 15px;
+            z-index: 500;
+        }
+
+        .btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 4px 0 #89b8e6;
+        }
+
+        /* Hitbox 100% */
+        .tap-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            cursor: pointer;
+        }
+
+        .kawaii-card {
+            background: white;
+            border-radius: 50px;
+            padding: 40px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+            border: 10px solid var(--accent-blue);
+            z-index: 200;
+            pointer-events: none; /* Laisse passer le clic vers tap-zone */
+            position: relative;
+            width: 90%;
+            max-width: 600px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #pro-trigger {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 120px;
+            height: 120px;
+            z-index: 1000;
+        }
+
+        #pro-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 50px;
+            box-shadow: 0 0 100px rgba(0,0,0,0.3);
+            z-index: 6000;
+            display: none;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        #visual-feedback {
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 150;
+        }
+
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 4000;
+        }
+
+        .floating {
+            animation: floatingAnim 3s ease-in-out infinite;
+        }
+
+        @keyframes floatingAnim {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .stars-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: white;
+            padding: 10px 30px;
+            border-radius: 40px;
+            border: 5px solid var(--accent-pink);
+            z-index: 300;
+            font-size: 1.5rem;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- Intro Overlay -->
+    <div id="intro-overlay" style="display: none;">
+        <h1>Coucou Émie !</h1>
+        <p style="margin: 30px 0; line-height: 1.4;">Bienvenue sur ton île magique. Oh là là, elle est un peu vide pour l'instant... Mais ne t'inquiète pas ! Tes amis animaux mignons (le Kangourou, la Loutre, le Hibou et le Panda) ont caché des trésors merveilleux pour t'aider à la décorer. Pour les découvrir, tu dois jouer avec eux et relever leurs défis de rythme et de sons. Prête pour l'aventure ?</p>
+        <button class="btn" onclick="game.closeIntro()">C'est parti !</button>
+    </div>
+
+    <!-- Écran Île (Menu) -->
+    <div id="screen-menu" class="screen active">
+        <div class="stars-container">⭐ <span id="star-count">0</span> / 3</div>
+        <h1 class="floating">L'Île d'Émie</h1>
+
+        <div id="island-container">
+            <div id="island-main"></div>
+        </div>
+
+        <div style="display: flex; gap: 20px;">
+            <button class="btn" onclick="game.start('rhythm')">Rythme 🥁</button>
+            <button class="btn" onclick="game.start('voice')">Voix 🗣️</button>
+        </div>
+    </div>
+
+    <!-- Écran Exercice -->
+    <div id="screen-game" class="screen">
+        <div class="kawaii-card">
+            <h2 id="current-word" style="font-size: 5rem; margin: 0;">...</h2>
+            <div id="reward-anim-space" style="height: 150px; display: flex; align-items: center; justify-content: center; margin-top: 20px;"></div>
+        </div>
+        <div class="tap-zone" id="tap-zone"></div>
+        <div id="visual-feedback"></div>
+    </div>
+
+    <!-- Espace Pro -->
+    <div id="pro-trigger"></div>
+    <div id="pro-panel">
+        <h2 style="color: var(--accent-blue);">Espace Pro</h2>
+        <div style="text-align: left; font-size: 1.2rem;">
+            <p>BPM: <input type="range" id="set-bpm" min="40" max="120" value="60"> <span id="val-bpm">60</span></p>
+            <p>Delta (ms): <input type="range" id="set-delta" min="50" max="400" value="200"> <span id="val-delta">200</span></p>
+            <p>Sensibilité Micro: <input type="range" id="set-mic" min="1" max="100" value="50"> <span id="val-mic">50</span></p>
+            <hr>
+            <h3>Historique des sessions</h3>
+            <div id="history-box" style="background: #f0f0f0; padding: 10px; border-radius: 20px; max-height: 200px; overflow-y: auto; font-size: 0.9rem; margin-bottom: 20px;"></div>
+            <button class="btn" style="font-size: 1.2rem;" onclick="pro.exportCSV()">Exporter CSV</button>
+            <button class="btn" style="font-size: 1.2rem; background: var(--accent-pink);" onclick="pro.clearIsland()">Réinitialiser l'île</button>
+        </div>
+        <button class="btn" onclick="pro.hide()">Fermer</button>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+</div>
+
+<script>
+    const game = {
+        stars: 0,
+        island: [],
+        history: [],
+        bpm: 60,
+        delta: 200,
+        mic: 50,
+        mode: null,
+        audioCtx: null,
+        nextTime: 0,
+        timerID: null,
+        lastBeat: 0,
+        isVoice: false,
+        analyser: null,
+        dataArray: null,
+
+        pools: {
+            'A': [{t:'Chat', i:'🐱'}, {t:'Bras', i:'💪'}, {t:'Rat', i:'🐭'}, {t:'Sac', i:'🎒'}, {t:'Lac', i:'🏞️'}],
+            'B': [{t:'Bateau', i:'⛵'}, {t:'Balle', i:'⚽'}, {t:'Bulle', i:'🫧'}, {t:'Bébé', i:'👶'}, {t:'Banc', i:'🪑'}],
+            'I': [{t:'Lit', i:'🛌'}, {t:'Nid', i:'🪺'}, {t:'Tapis', i:'🧶'}, {t:'Souris', i:'🖱️'}, {t:'Amis', i:'👫'}],
+            'OU': [{t:'Loup', i:'🐺'}, {t:'Roue', i:'🛞'}, {t:'Clou', i:'🔨'}, {t:'Mouche', i:'🪰'}, {t:'Genou', i:'🦵'}],
+            'T': [{t:'Train', i:'🚂'}, {t:'Tête', i:'👤'}, {t:'Tortue', i:'🐢'}, {t:'Tapis', i:'🧶'}, {t:'Tableau', i:'🖼️'}],
+            'K': [{t:'Koala', i:'🐨'}, {t:'Kangourou', i:'🦘'}, {t:'Képi', i:'👮'}, {t:'Karaté', i:'🥋'}, {t:'Kayak', i:'🛶'}]
+        },
+
+        rewards: {
+            nature: [
+                {i:'🌸', n:'Fleur lumineuse'}, {i:'🌳', n:'Arbre rose scintillant'},
+                {i:'✨', n:'Buisson à paillettes'}, {i:'☁️', n:'Petit nuage voyageur'},
+                {i:'🌈', n:'Arc-en-ciel miniature'}, {i:'💎', n:'Cristal bleu éclatant'},
+                {i:'🌊', n:'Cascade douce'}
+            ],
+            decoration: [
+                {i:'🏮', n:'Lanterne japonaise volante'}, {i:'🌠', n:'Étoile filante au sol'},
+                {i:'🪑', n:'Banc en bois tordu'}, {i:'🌉', n:'Petit pont coloré'},
+                {i:'🚩', n:'Drapeau à ton nom'}, {i:'⛲', n:'Fontaine de lumière'}
+            ],
+            adventure: [
+                {i:'🔭', n:'Télescope'}, {i:'🏠', n:'Petite cabane perchée'},
+                {i:'🐤', n:'Nichoir à oiseaux'}, {i:'📦', n:'Coffre aux trésors'},
+                {i:'🗿', n:'Statue de cristal'}
+            ]
+        },
+
+        animals: [
+            {n:'Kangourou', s:'🦘'}, {n:'Loutre', s:'🦦'}, {n:'Hibou', s:'🦉'}, {n:'Panda', s:'🐼'}
+        ],
+
+        init() {
+            this.load();
+            this.renderIsland();
+            this.updateUI();
+            if (!localStorage.getItem('emie-v2-intro')) {
+                document.getElementById('intro-overlay').style.display = 'flex';
+            }
+        },
+
+        closeIntro() {
+            document.getElementById('intro-overlay').style.display = 'none';
+            localStorage.setItem('emie-v2-intro', 'true');
+        },
+
+        load() {
+            this.stars = parseInt(localStorage.getItem('emie-stars')) || 0;
+            this.island = JSON.parse(localStorage.getItem('emie-island')) || [];
+            this.history = JSON.parse(localStorage.getItem('emie-history')) || [];
+            this.bpm = parseInt(localStorage.getItem('emie-bpm')) || 60;
+            this.delta = parseInt(localStorage.getItem('emie-delta')) || 200;
+            this.mic = parseInt(localStorage.getItem('emie-mic')) || 50;
+        },
+
+        save() {
+            localStorage.setItem('emie-stars', this.stars);
+            localStorage.setItem('emie-island', JSON.stringify(this.island));
+            localStorage.setItem('emie-history', JSON.stringify(this.history));
+            localStorage.setItem('emie-bpm', this.bpm);
+            localStorage.setItem('emie-delta', this.delta);
+            localStorage.setItem('emie-mic', this.mic);
+        },
+
+        start(mode) {
+            this.mode = mode;
+            if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            this.pickWord();
+            this.showScreen('screen-game');
+            if (mode === 'rhythm') {
+                this.nextTime = this.audioCtx.currentTime;
+                this.scheduler();
+            } else {
+                this.startVoice();
+            }
+        },
+
+        showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        },
+
+        currentPool: [],
+        pickWord() {
+            if (this.currentPool.length === 0) {
+                const keys = Object.keys(this.pools);
+                const randomKey = keys[Math.floor(Math.random() * keys.length)];
+                this.currentPool = [...this.pools[randomKey]].sort(() => Math.random() - 0.5);
+            }
+            const item = this.currentPool.pop();
+            document.getElementById('current-word').innerHTML = `<div style="font-size: 6rem;">${item.i}</div><div style="font-size: 3rem;">${item.t}</div>`;
+        },
+
+        // Moteur Rythme
+        scheduler() {
+            if (this.mode !== 'rhythm') return;
+            while (this.nextTime < this.audioCtx.currentTime + 0.1) {
+                this.tick();
+                this.onBeat();
+                this.nextTime += 60.0 / this.bpm;
+            }
+            this.timerID = requestAnimationFrame(() => this.scheduler());
+        },
+
+        tick() {
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            osc.frequency.setValueAtTime(440, this.nextTime); // Utiliser nextTime pour la précision
+            gain.gain.linearRampToValueAtTime(0.4, this.nextTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.nextTime + 0.1);
+            osc.connect(gain).connect(this.audioCtx.destination);
+            osc.start(this.nextTime);
+            osc.stop(this.nextTime + 0.1);
+        },
+
+        onBeat() {
+            const fb = document.getElementById('visual-feedback');
+            fb.style.width = '120px'; fb.style.height = '120px'; fb.style.borderRadius = '50%';
+            fb.style.backgroundColor = 'var(--accent-pink)'; fb.style.opacity = '0.6';
+            fb.style.transform = 'translateX(-50%) scale(1.6)';
+            setTimeout(() => { fb.style.opacity = '0'; fb.style.transform = 'translateX(-50%) scale(1)'; }, 100);
+            this.lastBeat = this.audioCtx.currentTime;
+        },
+
+        handleTap() {
+            if (this.mode !== 'rhythm') return;
+            const now = this.audioCtx.currentTime;
+            const d = Math.min(Math.abs(now - this.lastBeat), Math.abs(now - (this.lastBeat + 60/this.bpm))) * 1000;
+            if (d < this.delta) this.success();
+        },
+
+        // Moteur Voix
+        async startVoice() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const src = this.audioCtx.createMediaStreamSource(stream);
+                this.analyser = this.audioCtx.createAnalyser();
+                this.analyser.fftSize = 256;
+                src.connect(this.analyser);
+                this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                this.isVoice = true;
+                this.voiceLoop();
+            } catch (e) { this.showScreen('screen-menu'); }
+        },
+
+        voiceLoop() {
+            if (!this.isVoice || this.mode !== 'voice') return;
+            this.analyser.getByteFrequencyData(this.dataArray);
+            let avg = this.dataArray.reduce((a,b) => a+b) / this.dataArray.length;
+            const fb = document.getElementById('visual-feedback');
+            const thresh = (101 - this.mic) * 0.45;
+            fb.style.width = '180px'; fb.style.height = '180px'; fb.style.borderRadius = '50%';
+            fb.style.border = '8px dashed var(--accent-blue)'; fb.style.opacity = '1';
+            fb.style.transform = `translateX(-50%) scale(${1 + avg/40})`;
+            fb.style.backgroundColor = avg > thresh ? 'rgba(162, 210, 255, 0.4)' : 'transparent';
+            if (avg > thresh) this.voiceSuccess();
+            requestAnimationFrame(() => this.voiceLoop());
+        },
+
+        vDebounce: false,
+        voiceSuccess() {
+            if (this.vDebounce) return;
+            this.vDebounce = true;
+            setTimeout(() => { this.success(); this.vDebounce = false; }, 900);
+        },
+
+        success() {
+            this.stars++;
+            this.history.push({ t: new Date().toLocaleString(), m: this.mode, r: 'Succès' });
+            this.confetti();
+            this.updateUI();
+            if (this.stars >= 3) {
+                this.stars = 0;
+                this.rewardCycle();
+            } else {
+                setTimeout(() => this.pickWord(), 1200);
+            }
+            this.save();
+        },
+
+        updateUI() {
+            document.getElementById('star-count').textContent = this.stars;
+        },
+
+        rewardCycle() {
+            this.mode = 'reward';
+            const space = document.getElementById('reward-anim-space');
+            const anim = this.animals[Math.floor(Math.random() * this.animals.length)];
+            const pKeys = Object.keys(this.rewards);
+            const pool = this.rewards[pKeys[Math.floor(Math.random() * pKeys.length)]];
+            const item = pool[Math.floor(Math.random() * pool.length)];
+
+            space.innerHTML = `<div class="floating" style="text-align:center;">
+                <div style="font-size:5rem;">${anim.s}</div>
+                <div style="font-size:1.5rem; color:var(--accent-pink);">Cadeau de ${anim.n} !</div>
+                <div style="font-size:4rem;">${item.i}</div>
+            </div>`;
+
+            this.island.push({ i: item.i, n: item.n, x: 10 + Math.random()*80, y: 15 + Math.random()*70 });
+
+            setTimeout(() => {
+                space.innerHTML = '';
+                this.renderIsland();
+                this.showScreen('screen-menu');
+            }, 4500);
+        },
+
+        renderIsland() {
+            const m = document.getElementById('island-main');
+            m.innerHTML = '';
+            this.island.forEach(obj => {
+                const el = document.createElement('div');
+                el.className = 'island-object';
+                el.textContent = obj.i;
+                el.title = obj.n;
+                el.style.left = obj.x + '%';
+                el.style.top = obj.y + '%';
+                m.appendChild(el);
+            });
+        },
+
+        confetti() {
+            const c = document.getElementById('confetti-canvas');
+            const ctx = c.getContext('2d');
+            c.width = window.innerWidth; c.height = window.innerHeight;
+            let ps = [];
+            for(let i=0; i<60; i++) ps.push({x:Math.random()*c.width, y:-20, r:Math.random()*7+5, c:`hsl(${Math.random()*360},80%,70%)`, d:Math.random()*10});
+            const d = () => {
+                ctx.clearRect(0,0,c.width,c.height);
+                ps.forEach((p,i) => {
+                    ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+                    p.y += Math.cos(p.d)+3+p.r/2; p.x += Math.sin(p.d);
+                    if(p.y > c.height) ps.splice(i,1);
+                });
+                if(ps.length > 0) requestAnimationFrame(d);
+            };
+            d();
+        }
+    };
+
+    const pro = {
+        timer: null,
+        init() {
+            const ids = ['bpm', 'delta', 'mic'];
+            ids.forEach(id => {
+                const el = document.getElementById('set-'+id);
+                el.value = game[id];
+                document.getElementById('val-'+id).textContent = el.value;
+                el.oninput = (e) => {
+                    const v = parseInt(e.target.value);
+                    game[id] = v;
+                    document.getElementById('val-'+id).textContent = v;
+                    game.save();
+                };
+            });
+        },
+        show() {
+            const box = document.getElementById('history-box');
+            box.innerHTML = game.history.map(h => `[${h.t}] ${h.m}: ${h.r}`).reverse().join('<br>');
+            document.getElementById('pro-panel').style.display = 'block';
+        },
+        hide() { document.getElementById('pro-panel').style.display = 'none'; },
+        exportCSV() {
+            let csv = "Date;Mode;Resultat\n";
+            game.history.forEach(h => csv += `${h.t};${h.m};${h.r}\n`);
+            const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `historique_emie_${new Date().toLocaleDateString()}.csv`; a.click();
+        },
+        clearIsland() {
+            if(confirm("Effacer l'île ?")) { game.island = []; game.stars = 0; game.save(); game.renderIsland(); game.updateUI(); }
+        }
+    };
+
+    document.getElementById('tap-zone').onclick = () => game.handleTap();
+    const trig = document.getElementById('pro-trigger');
+    const startT = (e) => { if(e.type==='touchstart')e.preventDefault(); pro.timer = setTimeout(() => pro.show(), 5000); };
+    const stopT = () => clearTimeout(pro.timer);
+    trig.onmousedown = startT; trig.ontouchstart = startT; trig.onmouseup = stopT; trig.ontouchend = stopT;
+
+    game.init();
+    pro.init();
+</script>
+
+</body>
+</html>
