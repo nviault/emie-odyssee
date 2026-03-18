@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>L'Odyssée de l'Île d'Émie</title>
+    <link href="https://fonts.cdnfonts.com/css/open-dyslexic" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #FFFDD0;
+            --accent-blue: #A2D2FF;
+            --accent-pink: #FFC2D1;
+            --text-color: #5D5D5D;
+            --font-main: 'Open-Dyslexic', sans-serif;
+            --island-green: #D1FFA2;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            font-family: var(--font-main);
+            color: var(--text-color);
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        #app {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* L'Île Magique */
+        #island-view {
+            width: 90%;
+            height: 60%;
+            background: var(--island-green);
+            border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+            position: relative;
+            box-shadow: 0 20px 0 #b8e689, inset 0 -10px 20px rgba(0,0,0,0.05);
+            margin-top: 50px;
+            overflow: visible;
+        }
+
+        .island-object {
+            position: absolute;
+            font-size: 2rem;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--accent-pink);
+            text-shadow: 2px 2px 0px #fff;
+            margin: 20px 0;
+        }
+
+        .btn {
+            background-color: var(--accent-blue);
+            border: none;
+            border-radius: 50px;
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            font-family: var(--font-main);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #89b8e6;
+            transition: transform 0.1s, box-shadow 0.1s;
+            margin: 10px;
+            z-index: 50;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #89b8e6;
+        }
+
+        /* Hitbox plein écran */
+        .giant-tap-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        /* Espace Pro (En haut à droite) */
+        #pro-trigger {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            z-index: 100;
+        }
+
+        #pro-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 40px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+            z-index: 200;
+            display: none;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .kawaii-card {
+            background: white;
+            border-radius: 40px;
+            padding: 30px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border: 8px solid var(--accent-blue);
+            z-index: 5;
+            position: relative;
+            pointer-events: none; /* Laisser passer les clics vers tap-zone */
+        }
+
+        /* Progression */
+        #success-counter {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.5rem;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 4px solid var(--accent-pink);
+        }
+
+        /* Feedback Rythme / Voix */
+        #visual-feedback {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Schéma Guide Parent */
+        #parent-guide {
+            margin-top: 20px;
+            display: none;
+            background: #fff;
+            padding: 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 150;
+        }
+
+        /* Animations */
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating { animation: floating 3s ease-in-out infinite; }
+
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- Menu / Île Centrale -->
+    <div id="screen-menu" class="screen active">
+        <div id="success-counter">Étoiles : <span id="star-count">0</span>/3</div>
+        <h1 class="floating">L'Île d'Émie</h1>
+
+        <div id="island-view">
+            <!-- Les objets seront ajoutés ici -->
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button class="btn" onclick="game.start('rhythm')">Rythme</button>
+            <button class="btn" onclick="game.start('voice')">Voix</button>
+        </div>
+    </div>
+
+    <!-- Écran de Jeu -->
+    <div id="screen-game" class="screen">
+        <div class="kawaii-card">
+            <h2 id="current-word" style="font-size: 4rem;">...</h2>
+            <div id="reward-display" style="height: 100px;"></div>
+            <div id="parent-guide" style="padding: 15px; border: 2px dashed var(--accent-blue); margin-top: 15px;">
+                <strong style="color: var(--accent-blue);">Guide Parent : Points de Pression 👄</strong><br>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 5px;">
+                    <svg width="60" height="60" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#5D5D5D" stroke-width="2"/>
+                        <path d="M 30 65 Q 50 85 70 65" fill="none" stroke="red" stroke-width="4"/> <!-- Lèvres -->
+                        <circle cx="50" cy="45" r="5" fill="red" opacity="0.6"/> <!-- Palais -->
+                        <path d="M 40 45 L 60 45" stroke="red" stroke-width="2"/> <!-- Dents -->
+                    </svg>
+                    <div style="text-align: left; font-size: 0.8rem;">
+                        • Stimulez les lèvres pour le 'B' et 'OU'.<br>
+                        • Dos de la langue pour le 'K'.<br>
+                        • Pointe derrière les dents pour le 'T'.
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="giant-tap-zone" id="tap-zone"></div>
+        <div id="visual-feedback"></div>
+    </div>
+
+    <!-- Espace Pro Trigger -->
+    <div id="pro-trigger"></div>
+
+    <!-- Panneau Pro -->
+    <div id="pro-panel">
+        <h2>Espace Pro</h2>
+        <div class="settings" style="text-align: left;">
+            <p>BPM: <input type="range" id="setting-bpm" min="40" max="120" value="60"> <span id="val-bpm">60</span></p>
+            <p>Delta (ms): <input type="range" id="setting-delta" min="50" max="400" value="200"> <span id="val-delta">200</span></p>
+            <p>Sensibilité Micro: <input type="range" id="setting-mic" min="1" max="100" value="50"> <span id="val-mic">50</span></p>
+            <hr>
+            <h3>Historique</h3>
+            <div id="history-log" style="font-size: 0.8rem; max-height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 5px;"></div>
+            <button class="btn" style="font-size: 1rem;" onclick="pro.exportCSV()">Exporter CSV</button>
+            <button class="btn" style="font-size: 1rem; background: var(--accent-pink);" onclick="pro.resetIsland()">Réinitialiser l'Île</button>
+        </div>
+        <button class="btn" onclick="pro.hide()">Fermer</button>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+</div>
+
+<script>
+    const game = {
+        mode: null,
+        bpm: 60,
+        delta: 200,
+        micSensitivity: 50,
+        successCount: 0,
+        stars: 0,
+        islandObjects: [],
+        history: [],
+
+        pools: {
+            'A': ['Chat', 'Bras', 'Rat', 'Sac', 'Lac'],
+            'B': ['Bateau', 'Balle', 'Bulle', 'Bébé', 'Banc'],
+            'I': ['Lit', 'Nid', 'Tapis', 'Souris', 'Amis'],
+            'OU': ['Loup', 'Roue', 'Clou', 'Mouche', 'Genou'],
+            'T': ['Train', 'Tête', 'Tortue', 'Tapis', 'Tableau'],
+            'K': ['Koala', 'Kangourou', 'Képi', 'Karaté', 'Kayak']
+        },
+
+        rewards: {
+            nature: ['🌸', '🌳', '✨', '☁️', '🌈', '💎', '🌊'],
+            decoration: ['🏮', '🌠', '🪑', '🌉', '🚩', '⛲'],
+            adventure: ['🔭', '🏠', '🐤', '📦', '🗿']
+        },
+
+        animals: [
+            { name: 'Panda', svg: '<svg viewBox="0 0 100 100" width="80"><circle cx="50" cy="50" r="40" fill="#FFC2D1"/><circle cx="35" cy="45" r="5" fill="#5D5D5D"/><circle cx="65" cy="45" r="5" fill="#5D5D5D"/><path d="M 40 65 Q 50 75 60 65" stroke="#5D5D5D" stroke-width="3" fill="none"/></svg>' },
+            { name: 'Loutre', svg: '<svg viewBox="0 0 100 100" width="80"><ellipse cx="50" cy="50" rx="40" ry="30" fill="#A2D2FF"/><circle cx="35" cy="45" r="4" fill="#5D5D5D"/><circle cx="65" cy="45" r="4" fill="#5D5D5D"/><path d="M 45 55 L 55 55" stroke="#5D5D5D" stroke-width="2"/></svg>' },
+            { name: 'Hibou', svg: '<svg viewBox="0 0 100 100" width="80"><path d="M 20 80 L 50 20 L 80 80 Z" fill="#FFD1A2"/><circle cx="45" cy="50" r="4" fill="#5D5D5D"/><circle cx="55" cy="50" r="4" fill="#5D5D5D"/></svg>' },
+            { name: 'Kangourou', svg: '<svg viewBox="0 0 100 100" width="80"><rect x="25" y="30" width="50" height="50" rx="15" fill="#D1FFA2"/><circle cx="40" cy="50" r="4" fill="#5D5D5D"/><circle cx="60" cy="50" r="4" fill="#5D5D5D"/></svg>' }
+        ],
+
+        audioCtx: null,
+        analyser: null,
+        dataArray: null,
+        nextNoteTime: 0,
+        timerID: null,
+        lastBeatTime: 0,
+        isVoiceActive: false,
+
+        init() {
+            this.load();
+            this.renderIsland();
+            this.updateStarUI();
+        },
+
+        load() {
+            this.bpm = parseInt(localStorage.getItem('emie-bpm')) || 60;
+            this.delta = parseInt(localStorage.getItem('emie-delta')) || 200;
+            this.micSensitivity = parseInt(localStorage.getItem('emie-mic')) || 50;
+            this.stars = parseInt(localStorage.getItem('emie-stars')) || 0;
+            this.islandObjects = JSON.parse(localStorage.getItem('emie-island')) || [];
+            this.history = JSON.parse(localStorage.getItem('emie-history')) || [];
+        },
+
+        save() {
+            localStorage.setItem('emie-bpm', this.bpm);
+            localStorage.setItem('emie-delta', this.delta);
+            localStorage.setItem('emie-mic', this.micSensitivity);
+            localStorage.setItem('emie-stars', this.stars);
+            localStorage.setItem('emie-island', JSON.stringify(this.islandObjects));
+            localStorage.setItem('emie-history', JSON.stringify(this.history));
+        },
+
+        start(mode) {
+            this.mode = mode;
+            if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            document.getElementById('parent-guide').style.display = mode === 'voice' ? 'block' : 'none';
+            this.pickNewWord();
+            this.showScreen('screen-game');
+
+            if (mode === 'rhythm') {
+                this.nextNoteTime = this.audioCtx.currentTime;
+                this.scheduler();
+            } else {
+                this.startVoice();
+            }
+        },
+
+        showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        },
+
+        pickNewWord() {
+            const keys = Object.keys(this.pools);
+            const pool = this.pools[keys[Math.floor(Math.random() * keys.length)]];
+            document.getElementById('current-word').textContent = pool[Math.floor(Math.random() * pool.length)];
+        },
+
+        // Moteur de Rythme
+        scheduler() {
+            if (this.mode !== 'rhythm') return;
+            while (this.nextNoteTime < this.audioCtx.currentTime + 0.1) {
+                this.playTick();
+                this.onBeat();
+                this.nextNoteTime += 60.0 / this.bpm;
+            }
+            this.timerID = requestAnimationFrame(() => this.scheduler());
+        },
+
+        playTick() {
+            const osc = this.audioCtx.createOscillator();
+            const envelope = this.audioCtx.createGain();
+            osc.frequency.setValueAtTime(440, this.audioCtx.currentTime);
+            envelope.gain.linearRampToValueAtTime(0.5, this.audioCtx.currentTime + 0.01);
+            envelope.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.1);
+            osc.connect(envelope).connect(this.audioCtx.destination);
+            osc.start(); osc.stop(this.audioCtx.currentTime + 0.1);
+        },
+
+        onBeat() {
+            const fb = document.getElementById('visual-feedback');
+            fb.style.width = '100px'; fb.style.height = '100px'; fb.style.borderRadius = '50%';
+            fb.style.backgroundColor = 'var(--accent-pink)'; fb.style.transform = 'translateX(-50%) scale(1.5)';
+            fb.style.opacity = '0.5';
+            setTimeout(() => { fb.style.transform = 'translateX(-50%) scale(1)'; fb.style.opacity = '0'; }, 100);
+            this.lastBeatTime = this.audioCtx.currentTime;
+        },
+
+        handleTap() {
+            if (this.mode !== 'rhythm') return;
+            const now = this.audioCtx.currentTime;
+            const diff = Math.min(Math.abs(now - this.lastBeatTime), Math.abs(now - (this.lastBeatTime + 60/this.bpm))) * 1000;
+            if (diff < this.delta) this.onSuccess();
+        },
+
+        // Moteur de Voix
+        async startVoice() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = this.audioCtx.createMediaStreamSource(stream);
+                this.analyser = this.audioCtx.createAnalyser();
+                this.analyser.fftSize = 256;
+                source.connect(this.analyser);
+                this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                this.isVoiceActive = true;
+                this.voiceLoop();
+            } catch (err) { this.showScreen('screen-menu'); }
+        },
+
+        voiceLoop() {
+            if (!this.isVoiceActive || this.mode !== 'voice') return;
+            this.analyser.getByteFrequencyData(this.dataArray);
+            let avg = this.dataArray.reduce((a,b) => a+b) / this.dataArray.length;
+            const fb = document.getElementById('visual-feedback');
+            const threshold = (101 - this.micSensitivity) * 0.4;
+            fb.style.width = '150px'; fb.style.height = '150px'; fb.style.borderRadius = '50%';
+            fb.style.border = '5px dashed var(--accent-blue)'; fb.style.opacity = '1';
+            fb.style.transform = `translateX(-50%) scale(${1 + avg/50})`;
+            fb.style.backgroundColor = avg > threshold ? 'rgba(162, 210, 255, 0.3)' : 'transparent';
+            if (avg > threshold) this.onVoiceSuccess();
+            requestAnimationFrame(() => this.voiceLoop());
+        },
+
+        voiceDebounce: false,
+        onVoiceSuccess() {
+            if (this.voiceDebounce) return;
+            this.voiceDebounce = true;
+            setTimeout(() => { this.onSuccess(); this.voiceDebounce = false; }, 800);
+        },
+
+        onSuccess() {
+            this.stars++;
+            this.history.push({ date: new Date().toLocaleString(), mode: this.mode, result: 'Succès' });
+            this.triggerConfetti();
+            this.updateStarUI();
+
+            if (this.stars >= 3) {
+                this.stars = 0;
+                this.triggerRewardCycle();
+            } else {
+                setTimeout(() => this.pickNewWord(), 1000);
+            }
+            this.save();
+        },
+
+        updateStarUI() {
+            document.getElementById('star-count').textContent = this.stars;
+        },
+
+        triggerRewardCycle() {
+            this.mode = 'reward';
+            const rewardDisplay = document.getElementById('reward-display');
+            const animal = this.animals[Math.floor(Math.random() * this.animals.length)];
+            const poolKeys = Object.keys(this.rewards);
+            const pool = this.rewards[poolKeys[Math.floor(Math.random() * poolKeys.length)]];
+            const object = pool[Math.floor(Math.random() * pool.length)];
+
+            rewardDisplay.innerHTML = `${animal.svg} <span style="font-size:3rem; margin-left:20px;">+ ${object}</span>`;
+
+            // Ajouter à l'île
+            this.islandObjects.push({
+                icon: object,
+                x: Math.random() * 80 + 10,
+                y: Math.random() * 70 + 10
+            });
+
+            setTimeout(() => {
+                rewardDisplay.innerHTML = '';
+                this.renderIsland();
+                this.showScreen('screen-menu');
+            }, 3000);
+        },
+
+        renderIsland() {
+            const island = document.getElementById('island-view');
+            island.innerHTML = '';
+            this.islandObjects.forEach(obj => {
+                const el = document.createElement('div');
+                el.className = 'island-object';
+                el.textContent = obj.icon;
+                el.style.left = obj.x + '%';
+                el.style.top = obj.y + '%';
+                island.appendChild(el);
+            });
+        },
+
+        triggerConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            let p = [];
+            for(let i=0; i<50; i++) p.push({x:Math.random()*canvas.width, y:-10, r:Math.random()*6+4, c:`hsl(${Math.random()*360},70%,70%)`, d:Math.random()*10});
+            const draw = () => {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                p.forEach((m,i) => {
+                    ctx.fillStyle = m.c; ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, Math.PI*2); ctx.fill();
+                    m.y += Math.cos(m.d)+2+m.r/2; m.x += Math.sin(m.d);
+                    if(m.y > canvas.height) p.splice(i,1);
+                });
+                if(p.length > 0) requestAnimationFrame(draw);
+            };
+            draw();
+        }
+    };
+
+    const pro = {
+        timer: null,
+        init() {
+            const inputs = ['bpm', 'delta', 'mic'];
+            inputs.forEach(id => {
+                const el = document.getElementById('setting-'+id);
+                el.value = game[id === 'mic' ? 'micSensitivity' : id];
+                document.getElementById('val-'+id).textContent = el.value;
+                el.addEventListener('input', (e) => {
+                    const val = parseInt(e.target.value);
+                    document.getElementById('val-'+id).textContent = val;
+                    if(id === 'bpm') game.bpm = val;
+                    if(id === 'delta') game.delta = val;
+                    if(id === 'mic') game.micSensitivity = val;
+                    game.save();
+                });
+            });
+            this.updateHistory();
+        },
+        show() {
+            this.updateHistory();
+            document.getElementById('pro-panel').style.display = 'block';
+        },
+        hide() { document.getElementById('pro-panel').style.display = 'none'; },
+        updateHistory() {
+            const log = document.getElementById('history-log');
+            log.innerHTML = game.history.map(h => `[${h.date}] ${h.mode}: ${h.result}`).reverse().join('<br>');
+        },
+        exportCSV() {
+            let csv = "Date,Mode,Resultat\n";
+            game.history.forEach(h => csv += `${h.date},${h.mode},${h.result}\n`);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'historique_emie.csv'; a.click();
+        },
+        resetIsland() {
+            if(confirm("Réinitialiser l'île ?")) {
+                game.islandObjects = []; game.stars = 0; game.save(); game.renderIsland(); game.updateStarUI();
+            }
+        }
+    };
+
+    // Listeners
+    document.getElementById('tap-zone').addEventListener('click', () => game.handleTap());
+    const trigger = document.getElementById('pro-trigger');
+    const startTrigger = (e) => { e.preventDefault(); pro.timer = setTimeout(() => pro.show(), 5000); };
+    const stopTrigger = () => clearTimeout(pro.timer);
+    trigger.addEventListener('mousedown', startTrigger);
+    trigger.addEventListener('touchstart', startTrigger);
+    trigger.addEventListener('mouseup', stopTrigger);
+    trigger.addEventListener('touchend', stopTrigger);
+
+    game.init();
+    pro.init();
+</script>
+
+</body>
+</html>
