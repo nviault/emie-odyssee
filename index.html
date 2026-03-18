@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>L'Odyssée d'Émie-Ré-Mi</title>
+    <link href="https://fonts.cdnfonts.com/css/open-dyslexic" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #FFFDD0;
+            --accent-blue: #A2D2FF;
+            --accent-pink: #FFC2D1;
+            --text-color: #5D5D5D;
+            --font-main: 'Open-Dyslexic', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            font-family: var(--font-main);
+            color: var(--text-color);
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        #app {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: var(--accent-pink);
+            text-shadow: 2px 2px 0px #fff;
+        }
+
+        .btn {
+            background-color: var(--accent-blue);
+            border: none;
+            border-radius: 50px;
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            font-family: var(--font-main);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #89b8e6;
+            transition: transform 0.1s, box-shadow 0.1s;
+            margin: 10px;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #89b8e6;
+        }
+
+        /* Hitbox plein écran pour Émie */
+        .giant-tap-zone {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        /* Espace Pro (Coin de l'écran) */
+        #pro-trigger {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            z-index: 100;
+            /* background: rgba(0,0,0,0.05); /* Pour le debug */
+        }
+
+        #pro-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 40px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+            z-index: 200;
+            display: none;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .kawaii-card {
+            background: white;
+            border-radius: 40px;
+            padding: 30px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border: 8px solid var(--accent-blue);
+        }
+
+        /* Animations */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- Menu principal -->
+    <div id="screen-menu" class="screen active">
+        <h1 class="floating">L'Odyssée d'Émie-Ré-Mi</h1>
+        <button class="btn" onclick="game.start('rhythm')">Jouer au Rythme</button>
+        <button class="btn" onclick="game.start('voice')">Jouer avec la Voix</button>
+    </div>
+
+    <!-- Écran de Jeu (Rythme / Voix) -->
+    <div id="screen-game" class="screen">
+        <div id="exercise-display" class="kawaii-card">
+            <h2 id="current-word" style="font-size: 4rem;">...</h2>
+            <div id="reward-container" style="height: 150px; display: flex; align-items: center; justify-content: center;"></div>
+        </div>
+        <div class="giant-tap-zone" id="tap-zone"></div>
+        <div id="visual-feedback"></div>
+        <canvas id="confetti-canvas" style="position: absolute; top: 0; left: 0; pointer-events: none; width: 100%; height: 100%;"></canvas>
+    </div>
+
+    <!-- Espace Pro Trigger -->
+    <div id="pro-trigger"></div>
+
+    <!-- Panneau Pro -->
+    <div id="pro-panel">
+        <h2>Espace Pro</h2>
+        <div class="settings">
+            <p>BPM: <input type="range" id="setting-bpm" min="40" max="120" value="60"> <span id="val-bpm">60</span></p>
+            <p>Tolérance (ms): <input type="range" id="setting-delta" min="50" max="400" value="200"> <span id="val-delta">200</span></p>
+            <p>Sensibilité Micro: <input type="range" id="setting-mic" min="1" max="100" value="50"> <span id="val-mic">50</span></p>
+        </div>
+        <button class="btn" onclick="pro.hide()">Fermer</button>
+    </div>
+</div>
+
+<script>
+    // Structure globale
+    const game = {
+        state: 'menu',
+        mode: null,
+        bpm: 60,
+        delta: 200,
+        audioCtx: null,
+        nextNoteTime: 0,
+        timerID: null,
+        pools: {
+            'A': ['Chat', 'Bras', 'Rat', 'Sac', 'Lac'],
+            'B': ['Bateau', 'Balle', 'Bulle', 'Bébé', 'Banc'],
+            'I': ['Lit', 'Nid', 'Tapis', 'Souris', 'Amis'],
+            'OU': ['Loup', 'Roue', 'Clou', 'Mouche', 'Genou'],
+            'T': ['Train', 'Tête', 'Tortue', 'Tapis', 'Tableau'],
+            'K': ['Koala', 'Kangourou', 'Képi', 'Karaté', 'Kayak']
+        },
+        currentPool: [],
+        currentWord: '',
+        micSensitivity: 50,
+        analyser: null,
+        dataArray: null,
+        isVoiceActive: false,
+
+        pickNewWord() {
+            if (this.currentPool.length === 0) {
+                const keys = Object.keys(this.pools);
+                const randomKey = keys[Math.floor(Math.random() * keys.length)];
+                this.currentPool = [...this.pools[randomKey]];
+                // Mélange aléatoire
+                this.currentPool.sort(() => Math.random() - 0.5);
+            }
+            this.currentWord = this.currentPool.pop();
+            document.getElementById('current-word').textContent = this.currentWord;
+        },
+
+        initAudio() {
+            if (!this.audioCtx) {
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        },
+
+        playTick() {
+            const osc = this.audioCtx.createOscillator();
+            const envelope = this.audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, this.audioCtx.currentTime);
+
+            envelope.gain.setValueAtTime(0, this.audioCtx.currentTime);
+            envelope.gain.linearRampToValueAtTime(0.5, this.audioCtx.currentTime + 0.01);
+            envelope.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.1);
+
+            osc.connect(envelope);
+            envelope.connect(this.audioCtx.destination);
+
+            osc.start();
+            osc.stop(this.audioCtx.currentTime + 0.1);
+        },
+
+        scheduler() {
+            while (this.nextNoteTime < this.audioCtx.currentTime + 0.1) {
+                this.playTick();
+                this.onBeat();
+                const secondsPerBeat = 60.0 / this.bpm;
+                this.nextNoteTime += secondsPerBeat;
+            }
+            this.timerID = requestAnimationFrame(() => this.scheduler());
+        },
+
+        onBeat() {
+            // Logique de feedback visuel sur le temps
+            const feedback = document.getElementById('visual-feedback');
+            feedback.style.transform = 'scale(1.2)';
+            feedback.style.backgroundColor = 'var(--accent-pink)';
+            setTimeout(() => {
+                feedback.style.transform = 'scale(1)';
+                feedback.style.backgroundColor = 'transparent';
+            }, 100);
+
+            this.lastBeatTime = this.audioCtx.currentTime;
+        },
+
+        lastBeatTime: 0,
+
+        handleTap() {
+            if (this.mode !== 'rhythm') return;
+
+            const now = this.audioCtx.currentTime;
+            const diff = Math.abs(now - this.lastBeatTime) * 1000;
+            const diffNext = Math.abs(now - (this.lastBeatTime + (60/this.bpm))) * 1000;
+
+            if (diff < this.delta || diffNext < this.delta) {
+                this.onSuccess();
+            } else {
+                this.onFailure();
+            }
+        },
+
+        onSuccess() {
+            console.log('BRAVO!');
+            this.showReward();
+            this.triggerConfetti();
+            setTimeout(() => this.pickNewWord(), 1500);
+        },
+
+        animals: [
+            '<svg viewBox="0 0 100 100" width="100"><circle cx="50" cy="50" r="40" fill="#FFC2D1"/><circle cx="35" cy="45" r="5" fill="#5D5D5D"/><circle cx="65" cy="45" r="5" fill="#5D5D5D"/><path d="M 40 65 Q 50 75 60 65" stroke="#5D5D5D" stroke-width="3" fill="none"/></svg>', // Panda
+            '<svg viewBox="0 0 100 100" width="100"><ellipse cx="50" cy="50" rx="40" ry="30" fill="#A2D2FF"/><circle cx="35" cy="45" r="4" fill="#5D5D5D"/><circle cx="65" cy="45" r="4" fill="#5D5D5D"/><path d="M 45 55 L 55 55" stroke="#5D5D5D" stroke-width="2"/></svg>', // Loutre
+            '<svg viewBox="0 0 100 100" width="100"><path d="M 20 80 L 50 20 L 80 80 Z" fill="#FFD1A2"/><circle cx="45" cy="50" r="4" fill="#5D5D5D"/><circle cx="55" cy="50" r="4" fill="#5D5D5D"/></svg>', // Hibou
+            '<svg viewBox="0 0 100 100" width="100"><rect x="25" y="30" width="50" height="50" rx="15" fill="#D1FFA2"/><circle cx="40" cy="50" r="4" fill="#5D5D5D"/><circle cx="60" cy="50" r="4" fill="#5D5D5D"/></svg>' // Kangourou
+        ],
+
+        showReward() {
+            const container = document.getElementById('reward-container');
+            const randomAnimal = this.animals[Math.floor(Math.random() * this.animals.length)];
+            container.innerHTML = randomAnimal;
+            container.classList.add('floating');
+            setTimeout(() => {
+                container.innerHTML = '';
+                container.classList.remove('floating');
+            }, 2000);
+        },
+
+        triggerConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            let particles = [];
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * -canvas.height,
+                    r: Math.random() * 6 + 4,
+                    d: Math.random() * 10,
+                    color: `hsl(${Math.random() * 360}, 70%, 70%)`,
+                    tilt: Math.random() * 10 - 10
+                });
+            }
+
+            const draw = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach((p, i) => {
+                    ctx.beginPath();
+                    ctx.lineWidth = p.r;
+                    ctx.strokeStyle = p.color;
+                    ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+                    ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+                    ctx.stroke();
+
+                    p.y += Math.cos(p.d) + 1 + p.r / 2;
+                    p.tilt = Math.sin(p.d) * 15;
+
+                    if (p.y > canvas.height) {
+                        particles.splice(i, 1);
+                    }
+                });
+                if (particles.length > 0) {
+                    requestAnimationFrame(draw);
+                }
+            };
+            draw();
+        },
+
+        onFailure() {
+            console.log('OUPS!');
+        },
+
+        start(mode) {
+            this.initAudio();
+            this.mode = mode;
+            this.pickNewWord();
+            this.showScreen('screen-game');
+
+            if (mode === 'rhythm') {
+                this.nextNoteTime = this.audioCtx.currentTime;
+                this.scheduler();
+            } else if (mode === 'voice') {
+                this.startVoice();
+            }
+        },
+
+        async startVoice() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const source = this.audioCtx.createMediaStreamSource(stream);
+                this.analyser = this.audioCtx.createAnalyser();
+                this.analyser.fftSize = 256;
+                source.connect(this.analyser);
+                this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                this.isVoiceActive = true;
+                this.voiceLoop();
+            } catch (err) {
+                console.error("Erreur micro:", err);
+                alert("Le micro est nécessaire pour ce jeu !");
+                this.showScreen('screen-menu');
+            }
+        },
+
+        voiceLoop() {
+            if (!this.isVoiceActive || this.mode !== 'voice') return;
+
+            this.analyser.getByteFrequencyData(this.dataArray);
+            let sum = 0;
+            for (let i = 0; i < this.dataArray.length; i++) {
+                sum += this.dataArray[i];
+            }
+            let average = sum / this.dataArray.length;
+
+            // Guide visuel tactile pour le parent
+            const feedback = document.getElementById('visual-feedback');
+            const threshold = (101 - this.micSensitivity) * 0.5;
+            const size = 1 + (average / 100);
+
+            feedback.style.width = '200px';
+            feedback.style.height = '200px';
+            feedback.style.borderRadius = '50%';
+            feedback.style.border = '5px dashed var(--accent-blue)';
+            feedback.style.transform = `scale(${size})`;
+            feedback.style.backgroundColor = average > threshold ? 'rgba(162, 210, 255, 0.5)' : 'transparent';
+
+            if (average > threshold) {
+                this.onVoiceSuccess();
+            }
+
+            requestAnimationFrame(() => this.voiceLoop());
+        },
+
+        voiceDebounce: false,
+        onVoiceSuccess() {
+            if (this.voiceDebounce) return;
+            this.voiceDebounce = true;
+
+            // On valide après un petit délai de voix soutenue
+            setTimeout(() => {
+                this.onSuccess();
+                this.voiceDebounce = false;
+            }, 1000);
+        },
+
+        showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+    };
+
+    document.getElementById('tap-zone').addEventListener('click', () => game.handleTap());
+
+    const pro = {
+        longPressTimer: null,
+        init() {
+            // Charger les réglages
+            game.bpm = parseInt(localStorage.getItem('emie-bpm')) || 60;
+            game.delta = parseInt(localStorage.getItem('emie-delta')) || 200;
+            game.micSensitivity = parseInt(localStorage.getItem('emie-mic')) || 50;
+
+            document.getElementById('setting-bpm').value = game.bpm;
+            document.getElementById('setting-delta').value = game.delta;
+            document.getElementById('setting-mic').value = game.micSensitivity;
+
+            document.getElementById('val-bpm').textContent = game.bpm;
+            document.getElementById('val-delta').textContent = game.delta;
+            document.getElementById('val-mic').textContent = game.micSensitivity;
+
+            // Listeners
+            document.getElementById('setting-bpm').addEventListener('input', (e) => {
+                game.bpm = parseInt(e.target.value);
+                document.getElementById('val-bpm').textContent = game.bpm;
+                localStorage.setItem('emie-bpm', game.bpm);
+            });
+            document.getElementById('setting-delta').addEventListener('input', (e) => {
+                game.delta = parseInt(e.target.value);
+                document.getElementById('val-delta').textContent = game.delta;
+                localStorage.setItem('emie-delta', game.delta);
+            });
+            document.getElementById('setting-mic').addEventListener('input', (e) => {
+                game.micSensitivity = parseInt(e.target.value);
+                document.getElementById('val-mic').textContent = game.micSensitivity;
+                localStorage.setItem('emie-mic', game.micSensitivity);
+            });
+        },
+        show() {
+            document.getElementById('pro-panel').style.display = 'block';
+        },
+        hide() {
+            document.getElementById('pro-panel').style.display = 'none';
+        }
+    };
+
+    pro.init();
+
+    // Trigger Espace Pro
+    const trigger = document.getElementById('pro-trigger');
+    trigger.addEventListener('mousedown', () => {
+        pro.longPressTimer = setTimeout(() => pro.show(), 5000);
+    });
+    trigger.addEventListener('mouseup', () => clearTimeout(pro.longPressTimer));
+    trigger.addEventListener('mouseleave', () => clearTimeout(pro.longPressTimer));
+    trigger.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        pro.longPressTimer = setTimeout(() => pro.show(), 5000);
+    });
+    trigger.addEventListener('touchend', () => clearTimeout(pro.longPressTimer));
+
+</script>
+
+</body>
+</html>
