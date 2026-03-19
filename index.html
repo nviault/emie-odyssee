@@ -13,6 +13,7 @@
             --text-color: #5D5D5D;
             --font-main: 'Open-Dyslexic', sans-serif;
             --island-green: #D1FFA2;
+            --turquoise-water: #40E0D0;
         }
 
         * {
@@ -30,6 +31,8 @@
             color: var(--text-color);
             overflow: hidden;
             touch-action: manipulation;
+            font-size: 24pt;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
 
         #app {
@@ -60,14 +63,30 @@
         }
 
         /* L'Île Magique */
-        #island-view {
-            width: 90%;
-            height: 60%;
-            background: var(--island-green);
-            border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+        #island-water {
+            width: 95%;
+            height: 70%;
+            background: linear-gradient(135deg, var(--turquoise-water), #36c0b1);
+            border-radius: 43% 57% 41% 59% / 57% 45% 55% 43%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             position: relative;
-            box-shadow: 0 20px 0 #b8e689, inset 0 -10px 20px rgba(0,0,0,0.05);
             margin-top: 50px;
+            box-shadow: 0 15px 0 #20b2aa, inset 0 -10px 30px rgba(0,0,0,0.1);
+            transition: border-radius 1s ease-in-out;
+        }
+
+        #island-view {
+            width: 80%;
+            height: 75%;
+            background: var(--island-green);
+            border-radius: 54% 46% 62% 38% / 41% 59% 41% 59%;
+            position: relative;
+            box-shadow:
+                0 15px 0 #b8e689,
+                inset 0 -5px 15px rgba(0,0,0,0.05),
+                0 0 0 12px #F4E1A6;
             overflow: visible;
         }
 
@@ -83,10 +102,14 @@
         }
 
         h1 {
-            font-size: 2.2rem;
+            font-size: 3rem;
             color: var(--accent-pink);
             text-shadow: 2px 2px 0px #fff;
             margin: 20px 0;
+        }
+
+        h2 {
+            font-size: 2.5rem;
         }
 
         .btn {
@@ -94,19 +117,19 @@
             border: none;
             border-radius: 50px;
             padding: 20px 40px;
-            font-size: 1.5rem;
+            font-size: 2rem;
             font-family: var(--font-main);
             color: white;
             cursor: pointer;
-            box-shadow: 0 8px 0 #89b8e6;
-            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s;
             margin: 10px;
             z-index: 50;
         }
 
         .btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 4px 0 #89b8e6;
+            transform: translateY(4px) scale(0.98);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
         }
 
         /* Hitbox plein écran */
@@ -136,8 +159,8 @@
             transform: translate(-50%, -50%);
             background: white;
             padding: 30px;
-            border-radius: 40px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+            border-radius: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
             z-index: 200;
             display: none;
             width: 90%;
@@ -148,9 +171,9 @@
 
         .kawaii-card {
             background: white;
-            border-radius: 40px;
-            padding: 30px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border-radius: 50px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
             border: 8px solid var(--accent-blue);
             z-index: 5;
             position: relative;
@@ -217,8 +240,10 @@
         <div id="success-counter">Étoiles : <span id="star-count">0</span>/3</div>
         <h1 class="floating">L'Île d'Émie</h1>
 
-        <div id="island-view">
-            <!-- Les objets seront ajoutés ici -->
+        <div id="island-water">
+            <div id="island-view">
+                <!-- Les objets seront ajoutés ici -->
+            </div>
         </div>
 
         <div style="margin-top: 20px;">
@@ -302,10 +327,55 @@
         },
 
         animals: [
-            { name: 'Panda', svg: '<svg viewBox="0 0 100 100" width="80"><circle cx="50" cy="50" r="40" fill="#FFC2D1"/><circle cx="35" cy="45" r="5" fill="#5D5D5D"/><circle cx="65" cy="45" r="5" fill="#5D5D5D"/><path d="M 40 65 Q 50 75 60 65" stroke="#5D5D5D" stroke-width="3" fill="none"/></svg>' },
-            { name: 'Loutre', svg: '<svg viewBox="0 0 100 100" width="80"><ellipse cx="50" cy="50" rx="40" ry="30" fill="#A2D2FF"/><circle cx="35" cy="45" r="4" fill="#5D5D5D"/><circle cx="65" cy="45" r="4" fill="#5D5D5D"/><path d="M 45 55 L 55 55" stroke="#5D5D5D" stroke-width="2"/></svg>' },
-            { name: 'Hibou', svg: '<svg viewBox="0 0 100 100" width="80"><path d="M 20 80 L 50 20 L 80 80 Z" fill="#FFD1A2"/><circle cx="45" cy="50" r="4" fill="#5D5D5D"/><circle cx="55" cy="50" r="4" fill="#5D5D5D"/></svg>' },
-            { name: 'Kangourou', svg: '<svg viewBox="0 0 100 100" width="80"><rect x="25" y="30" width="50" height="50" rx="15" fill="#D1FFA2"/><circle cx="40" cy="50" r="4" fill="#5D5D5D"/><circle cx="60" cy="50" r="4" fill="#5D5D5D"/></svg>' }
+            { name: 'Panda', svg: `<svg viewBox="0 0 100 100" width="80">
+                <circle cx="50" cy="50" r="42" fill="#FFF"/>
+                <circle cx="25" cy="25" r="12" fill="#333"/>
+                <circle cx="75" cy="25" r="12" fill="#333"/>
+                <circle cx="50" cy="55" r="38" fill="#EEE"/>
+                <ellipse cx="35" cy="48" rx="10" ry="12" fill="#333"/>
+                <ellipse cx="65" cy="48" rx="10" ry="12" fill="#333"/>
+                <circle cx="35" cy="45" r="3" fill="#FFF"/>
+                <circle cx="65" cy="45" r="3" fill="#FFF"/>
+                <circle cx="50" cy="62" r="4" fill="#333"/>
+                <path d="M 42 68 Q 50 75 58 68" stroke="#333" stroke-width="2" fill="none"/>
+                <circle cx="30" cy="65" r="6" fill="#FFC2D1" opacity="0.4"/>
+                <circle cx="70" cy="65" r="6" fill="#FFC2D1" opacity="0.4"/>
+            </svg>` },
+            { name: 'Loutre', svg: `<svg viewBox="0 0 100 100" width="80">
+                <ellipse cx="50" cy="50" rx="42" ry="35" fill="#A2D2FF"/>
+                <circle cx="20" cy="35" r="8" fill="#89b8e6"/>
+                <circle cx="80" cy="35" r="8" fill="#89b8e6"/>
+                <ellipse cx="50" cy="55" rx="35" ry="28" fill="#BEE3FF"/>
+                <circle cx="35" cy="48" r="4" fill="#333"/>
+                <circle cx="65" cy="48" r="4" fill="#333"/>
+                <circle cx="36" cy="46" r="1.5" fill="#FFF"/>
+                <circle cx="66" cy="46" r="1.5" fill="#FFF"/>
+                <path d="M 45 60 Q 50 65 55 60" stroke="#333" stroke-width="2" fill="none"/>
+                <path d="M 25 55 L 15 52 M 25 60 L 15 60 M 25 65 L 15 68" stroke="#333" stroke-width="1"/>
+                <path d="M 75 55 L 85 52 M 75 60 L 85 60 M 75 65 L 85 68" stroke="#333" stroke-width="1"/>
+            </svg>` },
+            { name: 'Hibou', svg: `<svg viewBox="0 0 100 100" width="80">
+                <path d="M 15 40 Q 50 10 85 40 L 80 85 Q 50 95 20 85 Z" fill="#FFD1A2"/>
+                <circle cx="35" cy="45" r="12" fill="#FFF"/>
+                <circle cx="65" cy="45" r="12" fill="#FFF"/>
+                <circle cx="35" cy="45" r="5" fill="#333"/>
+                <circle cx="65" cy="45" r="5" fill="#333"/>
+                <circle cx="36" cy="43" r="2" fill="#FFF"/>
+                <circle cx="66" cy="43" r="2" fill="#FFF"/>
+                <path d="M 45 55 L 50 62 L 55 55 Z" fill="#FF8C00"/>
+                <path d="M 25 70 Q 35 65 45 70 M 55 70 Q 65 65 75 70" stroke="#CC9966" stroke-width="2" fill="none"/>
+            </svg>` },
+            { name: 'Kangourou', svg: `<svg viewBox="0 0 100 100" width="80">
+                <rect x="20" y="30" width="60" height="60" rx="20" fill="#D1FFA2"/>
+                <path d="M 25 10 L 35 35 M 75 10 L 65 35" stroke="#D1FFA2" stroke-width="12" stroke-linecap="round"/>
+                <ellipse cx="50" cy="60" rx="25" ry="20" fill="#E6FFD1"/>
+                <circle cx="38" cy="48" r="4" fill="#333"/>
+                <circle cx="62" cy="48" r="4" fill="#333"/>
+                <circle cx="39" cy="46" r="1.5" fill="#FFF"/>
+                <circle cx="63" cy="46" r="1.5" fill="#FFF"/>
+                <circle cx="50" cy="55" r="3" fill="#FFC2D1"/>
+                <path d="M 45 65 Q 50 70 55 65" stroke="#333" stroke-width="2" fill="none"/>
+            </svg>` }
         ],
 
         audioCtx: null,
