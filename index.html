@@ -66,23 +66,27 @@
         #island-water {
             width: 95%;
             height: 70%;
-            background-color: var(--turquoise-water);
-            border-radius: 50%;
+            background: linear-gradient(135deg, var(--turquoise-water), #36c0b1);
+            border-radius: 43% 57% 41% 59% / 57% 45% 55% 43%;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             margin-top: 50px;
-            box-shadow: 0 15px 0 #36c0b1, inset 0 -10px 20px rgba(0,0,0,0.05);
+            box-shadow: 0 15px 0 #20b2aa, inset 0 -10px 30px rgba(0,0,0,0.1);
+            transition: border-radius 1s ease-in-out;
         }
 
         #island-view {
-            width: 85%;
-            height: 80%;
+            width: 80%;
+            height: 75%;
             background: var(--island-green);
-            border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+            border-radius: 54% 46% 62% 38% / 41% 59% 41% 59%;
             position: relative;
-            box-shadow: 0 20px 0 #b8e689, inset 0 -10px 20px rgba(0,0,0,0.05);
+            box-shadow:
+                0 15px 0 #b8e689,
+                inset 0 -5px 15px rgba(0,0,0,0.05),
+                0 0 0 12px #F4E1A6;
             overflow: visible;
         }
 
