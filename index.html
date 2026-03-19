@@ -13,6 +13,7 @@
             --text-color: #5D5D5D;
             --font-main: 'Open-Dyslexic', sans-serif;
             --island-green: #D1FFA2;
+            --turquoise-water: #40E0D0;
         }
 
         * {
@@ -30,6 +31,8 @@
             color: var(--text-color);
             overflow: hidden;
             touch-action: manipulation;
+            font-size: 24pt;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
 
         #app {
@@ -60,14 +63,26 @@
         }
 
         /* L'Île Magique */
+        #island-water {
+            width: 95%;
+            height: 70%;
+            background-color: var(--turquoise-water);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-top: 50px;
+            box-shadow: 0 15px 0 #36c0b1, inset 0 -10px 20px rgba(0,0,0,0.05);
+        }
+
         #island-view {
-            width: 90%;
-            height: 60%;
+            width: 85%;
+            height: 80%;
             background: var(--island-green);
             border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
             position: relative;
             box-shadow: 0 20px 0 #b8e689, inset 0 -10px 20px rgba(0,0,0,0.05);
-            margin-top: 50px;
             overflow: visible;
         }
 
@@ -83,10 +98,14 @@
         }
 
         h1 {
-            font-size: 2.2rem;
+            font-size: 3rem;
             color: var(--accent-pink);
             text-shadow: 2px 2px 0px #fff;
             margin: 20px 0;
+        }
+
+        h2 {
+            font-size: 2.5rem;
         }
 
         .btn {
@@ -94,19 +113,19 @@
             border: none;
             border-radius: 50px;
             padding: 20px 40px;
-            font-size: 1.5rem;
+            font-size: 2rem;
             font-family: var(--font-main);
             color: white;
             cursor: pointer;
-            box-shadow: 0 8px 0 #89b8e6;
-            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s;
             margin: 10px;
             z-index: 50;
         }
 
         .btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 4px 0 #89b8e6;
+            transform: translateY(4px) scale(0.98);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
         }
 
         /* Hitbox plein écran */
@@ -136,8 +155,8 @@
             transform: translate(-50%, -50%);
             background: white;
             padding: 30px;
-            border-radius: 40px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+            border-radius: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
             z-index: 200;
             display: none;
             width: 90%;
@@ -148,9 +167,9 @@
 
         .kawaii-card {
             background: white;
-            border-radius: 40px;
-            padding: 30px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border-radius: 50px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
             border: 8px solid var(--accent-blue);
             z-index: 5;
             position: relative;
@@ -217,8 +236,10 @@
         <div id="success-counter">Étoiles : <span id="star-count">0</span>/3</div>
         <h1 class="floating">L'Île d'Émie</h1>
 
-        <div id="island-view">
-            <!-- Les objets seront ajoutés ici -->
+        <div id="island-water">
+            <div id="island-view">
+                <!-- Les objets seront ajoutés ici -->
+            </div>
         </div>
 
         <div style="margin-top: 20px;">
