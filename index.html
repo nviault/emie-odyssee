@@ -8,11 +8,11 @@
     <style>
         :root {
             --bg-color: #FFFDD0;
-            --accent-blue: #A2D2FF;
+            --accent-blue: #40E0D0; /* Turquoise water */
             --accent-pink: #FFC2D1;
             --text-color: #5D5D5D;
             --font-main: 'Open-Dyslexic', sans-serif;
-            --island-green: #D1FFA2;
+            --island-green: #D1FFA2; /* Tender green grass */
         }
 
         * {
@@ -30,6 +30,11 @@
             color: var(--text-color);
             overflow: hidden;
             touch-action: manipulation;
+            font-size: 24px;
+        }
+
+        * {
+            text-shadow: 0 0 5px rgba(255,255,255,0.8), 1px 1px 2px rgba(255,255,255,1);
         }
 
         #app {
@@ -84,8 +89,7 @@
 
         h1 {
             font-size: 2.2rem;
-            color: var(--accent-pink);
-            text-shadow: 2px 2px 0px #fff;
+            color: #ff6b8b; /* Slightly darker pink for better contrast */
             margin: 20px 0;
         }
 
@@ -94,11 +98,11 @@
             border: none;
             border-radius: 50px;
             padding: 20px 40px;
-            font-size: 1.5rem;
+            font-size: 1.4rem; /* ~33px */
             font-family: var(--font-main);
             color: white;
             cursor: pointer;
-            box-shadow: 0 8px 0 #89b8e6;
+            box-shadow: 0 8px 0 #36c2b4;
             transition: transform 0.1s, box-shadow 0.1s;
             margin: 10px;
             z-index: 50;
@@ -106,7 +110,7 @@
 
         .btn:active {
             transform: translateY(4px);
-            box-shadow: 0 4px 0 #89b8e6;
+            box-shadow: 0 4px 0 #36c2b4;
         }
 
         .btn {
@@ -160,6 +164,10 @@
             z-index: 50;
             position: relative;
             pointer-events: none; /* Nécessaire pour Rhythm mode, on override sur les boutons */
+            max-height: 85vh;
+            overflow-y: auto;
+            width: 95%;
+            max-width: 600px;
         }
 
         .kawaii-card * {
@@ -176,6 +184,28 @@
             padding: 10px 20px;
             border-radius: 30px;
             border: 4px solid var(--accent-pink);
+            z-index: 100;
+            display: block !important;
+        }
+
+
+        #mic-indicator {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 4px solid var(--accent-blue);
+            font-size: 1.2rem;
+            display: none;
+            z-index: 100;
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
         }
 
         /* Feedback Rythme / Voix */
@@ -185,7 +215,7 @@
             left: 50%;
             transform: translateX(-50%);
             pointer-events: none;
-            z-index: 5;
+            z-index: 60;
         }
 
         /* Schéma Guide Parent */
@@ -262,10 +292,19 @@
         .btn-prompt {
             background-color: var(--accent-pink);
             box-shadow: 0 8px 0 #e6a2b3;
+            font-size: 1.4rem !important; /* Ensure 32px+ */
         }
 
         .btn-prompt:active {
             box-shadow: 0 4px 0 #e6a2b3;
+        }
+
+        #current-word {
+            min-height: 4.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
         }
 
     </style>
@@ -273,9 +312,11 @@
 <body>
 
 <div id="app">
+    <div id="success-counter">Étoiles : <span id="star-count">0</span>/3</div>
+    <div id="mic-indicator">🎤 Micro Actif</div>
+
     <!-- Menu / Île Centrale -->
     <div id="screen-menu" class="screen active">
-        <div id="success-counter">Étoiles : <span id="star-count">0</span>/3</div>
         <h1 class="floating">L'Île d'Émie</h1>
 
         <div id="island-view">
@@ -288,15 +329,16 @@
         </div>
 
         <div style="margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
-            <div style="width: 100%; color: var(--accent-pink); font-size: 1.2rem;">Module PROMPT 👄</div>
-            <button class="btn btn-prompt" onclick="game.start('prompt', 'ascenseur')" style="padding: 10px 20px; font-size: 1rem;">Ascenseur</button>
-            <button class="btn btn-prompt" onclick="game.start('prompt', 'bisou')" style="padding: 10px 20px; font-size: 1rem;">Bisou</button>
-            <button class="btn btn-prompt" onclick="game.start('prompt', 'saut')" style="padding: 10px 20px; font-size: 1rem;">Saut</button>
+            <div style="width: 100%; color: #ff6b8b; font-size: 1.5rem;">Module PROMPT 👄</div>
+            <button class="btn btn-prompt" onclick="game.start('prompt', 'ascenseur')">Ascenseur</button>
+            <button class="btn btn-prompt" onclick="game.start('prompt', 'bisou')">Bisou</button>
+            <button class="btn btn-prompt" onclick="game.start('prompt', 'saut')">Saut</button>
         </div>
     </div>
 
     <!-- Écran de Jeu -->
     <div id="screen-game" class="screen">
+        <button class="btn" onclick="game.quit()" style="position: absolute; bottom: 20px; left: 20px; z-index: 110; font-size: 1.2rem; padding: 15px 30px;">Quitter</button>
         <div class="kawaii-card">
             <h2 id="current-word" style="font-size: 3rem; margin: 10px 0;">...</h2>
 
@@ -321,7 +363,7 @@
                             <path d="M 40 45 L 60 45" stroke="red" stroke-width="2"/> <!-- Dents -->
                         </svg>
                     </div>
-                    <div id="guide-text" style="text-align: left; font-size: 0.8rem;">
+                    <div id="guide-text" style="text-align: left; font-size: 1.2rem; line-height: 1.4;">
                         • Stimulez les lèvres pour le 'B' et 'OU'.<br>
                         • Dos de la langue pour le 'K'.<br>
                         • Pointe derrière les dents pour le 'T'.
@@ -343,6 +385,9 @@
             <p>BPM: <input type="range" id="setting-bpm" min="40" max="120" value="60"> <span id="val-bpm">60</span></p>
             <p>Delta (ms): <input type="range" id="setting-delta" min="50" max="400" value="200"> <span id="val-delta">200</span></p>
             <p>Sensibilité Micro: <input type="range" id="setting-mic" min="1" max="100" value="50"> <span id="val-mic">50</span></p>
+            <div style="height: 20px; background: #eee; width: 100%; border-radius: 5px; margin-bottom: 10px; display: block;">
+                <div id="vumeter" style="height: 20px; width: 10%; background: var(--accent-blue); border-radius: 5px; display: block;"></div>
+            </div>
             <hr>
             <h3>Historique</h3>
             <div id="history-log" style="font-size: 0.8rem; max-height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 5px;"></div>
@@ -420,7 +465,7 @@
                 <line x1="70" y1="65" x2="58" y2="85" stroke="#5D5D5D" stroke-width="1"/>
             </svg>`,
             tempo: (state) => `<svg viewBox="0 0 100 100" width="120">
-                <circle cx="50" cy="50" r="45" fill="#FFFDD0" stroke="#A2D2FF" stroke-width="5"/>
+                <circle cx="50" cy="50" r="45" fill="#FFFDD0" stroke="#40E0D0" stroke-width="5"/>
                 <circle cx="35" cy="40" r="5" fill="#5D5D5D"/>
                 <circle cx="65" cy="40" r="5" fill="#5D5D5D"/>
                 ${state === 'kiss'
@@ -429,7 +474,7 @@
             </svg>`,
             jumper: `<svg viewBox="0 0 100 100" width="100">
                 <circle cx="50" cy="30" r="20" fill="#D1FFA2" stroke="#5D5D5D" stroke-width="2"/>
-                <rect x="35" y="50" width="30" height="40" rx="10" fill="#A2D2FF" stroke="#5D5D5D" stroke-width="2"/>
+                <rect x="35" y="50" width="30" height="40" rx="10" fill="#40E0D0" stroke="#5D5D5D" stroke-width="2"/>
                 <path d="M 40 90 L 30 98 M 60 90 L 70 98" stroke="#5D5D5D" stroke-width="3"/>
             </svg>`
         },
@@ -447,6 +492,15 @@
             this.load();
             this.renderIsland();
             this.updateStarUI();
+        },
+
+        quit() {
+            if (this.mode === 'rhythm') {
+                cancelAnimationFrame(this.timerID);
+            }
+            this.mode = null;
+            this.showScreen('screen-menu');
+            document.getElementById('mic-indicator').style.display = 'none';
         },
 
         load() {
@@ -501,8 +555,10 @@
             if (mode === 'rhythm') {
                 this.nextNoteTime = this.audioCtx.currentTime;
                 this.scheduler();
+                document.getElementById('mic-indicator').style.display = 'none';
             } else {
                 this.startVoice();
+                document.getElementById('mic-indicator').style.display = 'block';
             }
         },
 
@@ -556,6 +612,7 @@
 
         // Moteur de Voix
         async startVoice() {
+            if (this.audioCtx.state === 'suspended') await this.audioCtx.resume();
             if (!this.isVoiceActive) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -566,7 +623,9 @@
                     this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
                     this.isVoiceActive = true;
                 } catch (err) {
+                    console.error("Mic error:", err);
                     this.showScreen('screen-menu');
+                    document.getElementById('mic-indicator').style.display = 'none';
                     return;
                 }
             }
@@ -592,19 +651,30 @@
             fb.style.transform = `translateX(-50%) scale(${1 + avg/50})`;
             fb.style.backgroundColor = avg > threshold ? 'rgba(162, 210, 255, 0.3)' : 'transparent';
 
+            // Mise à jour Vumètre
+            const vumeter = document.getElementById('vumeter');
+            if(vumeter) vumeter.style.width = Math.min(100, (avg/128)*100) + '%';
+
             if (this.mode === 'prompt') {
                 if (this.promptSubMode === 'ascenseur') {
-                    // Analyse fréquentielle simplifiée
-                    let lowFreq = 0; // "A"
-                    let highFreq = 0; // "I/OU"
-                    for(let i=0; i<10; i++) lowFreq += this.dataArray[i];
-                    for(let i=20; i<60; i++) highFreq += this.dataArray[i];
+                    // Analyse fréquentielle élargie pour enfants
+                    let lowFreq = 0; // "A" (Grave)
+                    let highFreq = 0; // "I/OU" (Aigu)
+                    for(let i=0; i<15; i++) lowFreq += this.dataArray[i];
+                    for(let i=20; i<80; i++) highFreq += this.dataArray[i];
 
                     if (avg > threshold) {
-                        if (highFreq > lowFreq * 1.5) this.balloonY = Math.min(this.balloonY + 2, 90);
-                        else if (lowFreq > highFreq * 1.2) this.balloonY = Math.max(this.balloonY - 2, 10);
-                        document.getElementById('prompt-balloon').style.bottom = this.balloonY + '%';
-                        if (this.balloonY > 80 || this.balloonY < 20) this.onVoiceSuccess();
+                        if (highFreq > lowFreq * 1.2) this.balloonY = Math.min(this.balloonY + 2, 90);
+                        else if (lowFreq > highFreq * 1.1) this.balloonY = Math.max(this.balloonY - 2, 10);
+
+                        const balloon = document.getElementById('prompt-balloon');
+                        balloon.style.bottom = this.balloonY + '%';
+
+                        if (this.balloonY > 85 || this.balloonY < 15) {
+                            balloon.style.transform = 'translateX(-50%) scale(1.2) rotate(15deg)';
+                            setTimeout(() => balloon.style.transform = 'translateX(-50%) scale(1) rotate(0deg)', 500);
+                            this.onVoiceSuccess();
+                        }
                     }
                 } else if (this.promptSubMode === 'bisou') {
                     if (avg > threshold) {
@@ -650,6 +720,21 @@
             this.history.push({ date: new Date().toLocaleString(), mode: modeName, result: 'Succès' });
             this.triggerConfetti();
             this.updateStarUI();
+
+            if (this.mode === 'prompt') {
+                const config = this.promptConfigs[this.promptSubMode];
+                const wordEl = document.getElementById('current-word');
+                wordEl.textContent = "Bravo ! ⭐";
+                wordEl.style.color = "var(--accent-blue)";
+                wordEl.style.transform = "scale(1.2)";
+                setTimeout(() => {
+                    if(this.mode === 'prompt') {
+                        wordEl.textContent = config.instructions;
+                        wordEl.style.color = "var(--text-color)";
+                        wordEl.style.transform = "scale(1)";
+                    }
+                }, 1000);
+            }
 
             if (this.stars >= 3) {
                 this.stars = 0;
