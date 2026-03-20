@@ -109,6 +109,11 @@
             box-shadow: 0 4px 0 #89b8e6;
         }
 
+        .btn {
+            z-index: 50;
+            position: relative;
+        }
+
         /* Hitbox plein écran */
         .giant-tap-zone {
             position: absolute;
@@ -152,9 +157,13 @@
             padding: 30px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.05);
             border: 8px solid var(--accent-blue);
-            z-index: 5;
+            z-index: 50;
             position: relative;
-            pointer-events: none; /* Laisser passer les clics vers tap-zone */
+            pointer-events: none; /* Nécessaire pour Rhythm mode, on override sur les boutons */
+        }
+
+        .kawaii-card * {
+            pointer-events: auto; /* Réactiver pour tous les éléments internes */
         }
 
         /* Progression */
@@ -207,6 +216,58 @@
         }
         .floating { animation: floating 3s ease-in-out infinite; }
 
+        /* Styles spécifique PROMPT */
+        #prompt-stage {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            display: none;
+            overflow: hidden;
+            background: rgba(255,255,255,0.5);
+            border-radius: 30px;
+            margin: 15px 0;
+        }
+
+        #prompt-balloon {
+            position: absolute;
+            left: 50%;
+            bottom: 50%;
+            transform: translateX(-50%);
+            transition: bottom 0.3s ease-out;
+        }
+
+        #prompt-tempo {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #prompt-jumper {
+            position: absolute;
+            left: 20%;
+            bottom: 20px;
+        }
+
+        .jump-animation {
+            animation: jumpArc 1.5s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+        }
+
+        @keyframes jumpArc {
+            0% { left: 20%; bottom: 20px; }
+            50% { bottom: 150px; }
+            100% { left: 70%; bottom: 20px; }
+        }
+
+        .btn-prompt {
+            background-color: var(--accent-pink);
+            box-shadow: 0 8px 0 #e6a2b3;
+        }
+
+        .btn-prompt:active {
+            box-shadow: 0 4px 0 #e6a2b3;
+        }
+
     </style>
 </head>
 <body>
@@ -225,23 +286,42 @@
             <button class="btn" onclick="game.start('rhythm')">Rythme</button>
             <button class="btn" onclick="game.start('voice')">Voix</button>
         </div>
+
+        <div style="margin-top: 10px; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
+            <div style="width: 100%; color: var(--accent-pink); font-size: 1.2rem;">Module PROMPT 👄</div>
+            <button class="btn btn-prompt" onclick="game.start('prompt', 'ascenseur')" style="padding: 10px 20px; font-size: 1rem;">Ascenseur</button>
+            <button class="btn btn-prompt" onclick="game.start('prompt', 'bisou')" style="padding: 10px 20px; font-size: 1rem;">Bisou</button>
+            <button class="btn btn-prompt" onclick="game.start('prompt', 'saut')" style="padding: 10px 20px; font-size: 1rem;">Saut</button>
+        </div>
     </div>
 
     <!-- Écran de Jeu -->
     <div id="screen-game" class="screen">
         <div class="kawaii-card">
-            <h2 id="current-word" style="font-size: 4rem;">...</h2>
+            <h2 id="current-word" style="font-size: 3rem; margin: 10px 0;">...</h2>
+
+            <div id="prompt-stage">
+                <div id="prompt-balloon"></div>
+                <div id="prompt-tempo"></div>
+                <div id="prompt-jumper"></div>
+            </div>
+
             <div id="reward-display" style="height: 100px;"></div>
+
+            <button id="btn-manual-validate" class="btn" onclick="game.onSuccess()" style="display: none; background: #FFD1A2; box-shadow: 0 8px 0 #e6b889; font-size: 1.2rem; padding: 10px 30px;">Valider l'effort 👍</button>
+
             <div id="parent-guide" style="padding: 15px; border: 2px dashed var(--accent-blue); margin-top: 15px;">
-                <strong style="color: var(--accent-blue);">Guide Parent : Points de Pression 👄</strong><br>
+                <strong id="guide-title" style="color: var(--accent-blue);">Guide Parent : Points de Pression 👄</strong><br>
                 <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 5px;">
-                    <svg width="60" height="60" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#5D5D5D" stroke-width="2"/>
-                        <path d="M 30 65 Q 50 85 70 65" fill="none" stroke="red" stroke-width="4"/> <!-- Lèvres -->
-                        <circle cx="50" cy="45" r="5" fill="red" opacity="0.6"/> <!-- Palais -->
-                        <path d="M 40 45 L 60 45" stroke="red" stroke-width="2"/> <!-- Dents -->
-                    </svg>
-                    <div style="text-align: left; font-size: 0.8rem;">
+                    <div id="guide-svg-container">
+                        <svg width="60" height="60" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" fill="none" stroke="#5D5D5D" stroke-width="2"/>
+                            <path d="M 30 65 Q 50 85 70 65" fill="none" stroke="red" stroke-width="4"/> <!-- Lèvres -->
+                            <circle cx="50" cy="45" r="5" fill="red" opacity="0.6"/> <!-- Palais -->
+                            <path d="M 40 45 L 60 45" stroke="red" stroke-width="2"/> <!-- Dents -->
+                        </svg>
+                    </div>
+                    <div id="guide-text" style="text-align: left; font-size: 0.8rem;">
                         • Stimulez les lèvres pour le 'B' et 'OU'.<br>
                         • Dos de la langue pour le 'K'.<br>
                         • Pointe derrière les dents pour le 'T'.
@@ -278,6 +358,7 @@
 <script>
     const game = {
         mode: null,
+        promptSubMode: null,
         bpm: 60,
         delta: 200,
         micSensitivity: 50,
@@ -285,6 +366,29 @@
         stars: 0,
         islandObjects: [],
         history: [],
+        voiceHoldCounter: 0,
+        balloonY: 50,
+
+        promptConfigs: {
+            'ascenseur': {
+                title: "L'Ascenseur d'Émie",
+                guide: "Placez votre index sous le menton pour aider à contrôler l'ouverture. 'A' fait descendre, 'I/OU' fait monter.",
+                instructions: "Chante pour faire bouger la montgolfière !",
+                icon: "🎈"
+            },
+            'bisou': {
+                title: "Le Bisou de Tempo",
+                guide: "Placez vos doigts aux commissures des lèvres pour aider à arrondir (OU) ou étirer (III).",
+                instructions: "Fais un long 'OUUU' ou 'IIII' !",
+                icon: "👄"
+            },
+            'saut': {
+                title: "Le Saut de la Langue",
+                guide: "Pression sous le menton pour le 'KA' ou sous la lèvre inférieure pour le 'TA'.",
+                instructions: "Dis 'TA' ou 'KA' pour faire sauter le personnage !",
+                icon: "👅"
+            }
+        },
 
         pools: {
             'A': ['Chat', 'Bras', 'Rat', 'Sac', 'Lac'],
@@ -308,6 +412,28 @@
             { name: 'Kangourou', svg: '<svg viewBox="0 0 100 100" width="80"><rect x="25" y="30" width="50" height="50" rx="15" fill="#D1FFA2"/><circle cx="40" cy="50" r="4" fill="#5D5D5D"/><circle cx="60" cy="50" r="4" fill="#5D5D5D"/></svg>' }
         ],
 
+        assets: {
+            balloon: `<svg viewBox="0 0 100 100" width="120">
+                <path d="M 50 10 Q 80 10 80 40 Q 80 70 50 90 Q 20 70 20 40 Q 20 10 50 10" fill="#FFC2D1" stroke="#5D5D5D" stroke-width="2"/>
+                <rect x="42" y="85" width="16" height="12" fill="#D1FFA2" stroke="#5D5D5D" stroke-width="2"/>
+                <line x1="30" y1="65" x2="42" y2="85" stroke="#5D5D5D" stroke-width="1"/>
+                <line x1="70" y1="65" x2="58" y2="85" stroke="#5D5D5D" stroke-width="1"/>
+            </svg>`,
+            tempo: (state) => `<svg viewBox="0 0 100 100" width="120">
+                <circle cx="50" cy="50" r="45" fill="#FFFDD0" stroke="#A2D2FF" stroke-width="5"/>
+                <circle cx="35" cy="40" r="5" fill="#5D5D5D"/>
+                <circle cx="65" cy="40" r="5" fill="#5D5D5D"/>
+                ${state === 'kiss'
+                    ? '<circle cx="50" cy="70" r="10" fill="#FFC2D1" stroke="#5D5D5D" stroke-width="2"/>'
+                    : '<path d="M 30 70 Q 50 90 70 70" fill="none" stroke="#FFC2D1" stroke-width="8" stroke-linecap="round"/>'}
+            </svg>`,
+            jumper: `<svg viewBox="0 0 100 100" width="100">
+                <circle cx="50" cy="30" r="20" fill="#D1FFA2" stroke="#5D5D5D" stroke-width="2"/>
+                <rect x="35" y="50" width="30" height="40" rx="10" fill="#A2D2FF" stroke="#5D5D5D" stroke-width="2"/>
+                <path d="M 40 90 L 30 98 M 60 90 L 70 98" stroke="#5D5D5D" stroke-width="3"/>
+            </svg>`
+        },
+
         audioCtx: null,
         analyser: null,
         dataArray: null,
@@ -315,6 +441,7 @@
         timerID: null,
         lastBeatTime: 0,
         isVoiceActive: false,
+        isVoiceLooping: false,
 
         init() {
             this.load();
@@ -340,12 +467,35 @@
             localStorage.setItem('emie-history', JSON.stringify(this.history));
         },
 
-        start(mode) {
+        start(mode, subMode = null) {
             this.mode = mode;
+            this.promptSubMode = subMode;
+            this.voiceHoldCounter = 0;
+            this.balloonY = 50;
+
             if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-            document.getElementById('parent-guide').style.display = mode === 'voice' ? 'block' : 'none';
-            this.pickNewWord();
+            const isPrompt = mode === 'prompt';
+            document.getElementById('parent-guide').style.display = (mode === 'voice' || isPrompt) ? 'block' : 'none';
+            document.getElementById('prompt-stage').style.display = isPrompt ? 'block' : 'none';
+            document.getElementById('btn-manual-validate').style.display = isPrompt ? 'inline-block' : 'none';
+
+            if (isPrompt) {
+                const config = this.promptConfigs[subMode];
+                document.getElementById('current-word').textContent = config.instructions;
+                document.getElementById('guide-title').textContent = config.title;
+                document.getElementById('guide-text').textContent = config.guide;
+
+                // Reset/Init visuals
+                document.getElementById('prompt-balloon').innerHTML = subMode === 'ascenseur' ? this.assets.balloon : '';
+                document.getElementById('prompt-tempo').innerHTML = subMode === 'bisou' ? this.assets.tempo('smile') : '';
+                document.getElementById('prompt-jumper').innerHTML = subMode === 'saut' ? this.assets.jumper : '';
+                document.getElementById('prompt-balloon').style.bottom = '50%';
+                document.getElementById('prompt-jumper').classList.remove('jump-animation');
+            } else {
+                this.pickNewWord();
+            }
+
             this.showScreen('screen-game');
 
             if (mode === 'rhythm') {
@@ -406,29 +556,84 @@
 
         // Moteur de Voix
         async startVoice() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const source = this.audioCtx.createMediaStreamSource(stream);
-                this.analyser = this.audioCtx.createAnalyser();
-                this.analyser.fftSize = 256;
-                source.connect(this.analyser);
-                this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-                this.isVoiceActive = true;
+            if (!this.isVoiceActive) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const source = this.audioCtx.createMediaStreamSource(stream);
+                    this.analyser = this.audioCtx.createAnalyser();
+                    this.analyser.fftSize = 256;
+                    source.connect(this.analyser);
+                    this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+                    this.isVoiceActive = true;
+                } catch (err) {
+                    this.showScreen('screen-menu');
+                    return;
+                }
+            }
+
+            if (!this.isVoiceLooping) {
+                this.isVoiceLooping = true;
                 this.voiceLoop();
-            } catch (err) { this.showScreen('screen-menu'); }
+            }
         },
 
         voiceLoop() {
-            if (!this.isVoiceActive || this.mode !== 'voice') return;
+            if (!this.isVoiceActive || (this.mode !== 'voice' && this.mode !== 'prompt')) {
+                this.isVoiceLooping = false;
+                return;
+            }
             this.analyser.getByteFrequencyData(this.dataArray);
             let avg = this.dataArray.reduce((a,b) => a+b) / this.dataArray.length;
-            const fb = document.getElementById('visual-feedback');
             const threshold = (101 - this.micSensitivity) * 0.4;
+
+            const fb = document.getElementById('visual-feedback');
             fb.style.width = '150px'; fb.style.height = '150px'; fb.style.borderRadius = '50%';
             fb.style.border = '5px dashed var(--accent-blue)'; fb.style.opacity = '1';
             fb.style.transform = `translateX(-50%) scale(${1 + avg/50})`;
             fb.style.backgroundColor = avg > threshold ? 'rgba(162, 210, 255, 0.3)' : 'transparent';
-            if (avg > threshold) this.onVoiceSuccess();
+
+            if (this.mode === 'prompt') {
+                if (this.promptSubMode === 'ascenseur') {
+                    // Analyse fréquentielle simplifiée
+                    let lowFreq = 0; // "A"
+                    let highFreq = 0; // "I/OU"
+                    for(let i=0; i<10; i++) lowFreq += this.dataArray[i];
+                    for(let i=20; i<60; i++) highFreq += this.dataArray[i];
+
+                    if (avg > threshold) {
+                        if (highFreq > lowFreq * 1.5) this.balloonY = Math.min(this.balloonY + 2, 90);
+                        else if (lowFreq > highFreq * 1.2) this.balloonY = Math.max(this.balloonY - 2, 10);
+                        document.getElementById('prompt-balloon').style.bottom = this.balloonY + '%';
+                        if (this.balloonY > 80 || this.balloonY < 20) this.onVoiceSuccess();
+                    }
+                } else if (this.promptSubMode === 'bisou') {
+                    if (avg > threshold) {
+                        this.voiceHoldCounter++;
+                        document.getElementById('prompt-tempo').innerHTML = this.assets.tempo('kiss');
+                        if (this.voiceHoldCounter > 100) { // Environ 1.6s à 60fps
+                            this.onVoiceSuccess();
+                            this.voiceHoldCounter = 0;
+                        }
+                    } else {
+                        this.voiceHoldCounter = Math.max(0, this.voiceHoldCounter - 1);
+                        document.getElementById('prompt-tempo').innerHTML = this.assets.tempo('smile');
+                    }
+                } else if (this.promptSubMode === 'saut') {
+                    if (avg > threshold) {
+                        const jumper = document.getElementById('prompt-jumper');
+                        if (!jumper.classList.contains('jump-animation')) {
+                            jumper.classList.add('jump-animation');
+                            setTimeout(() => {
+                                jumper.classList.remove('jump-animation');
+                                this.onVoiceSuccess();
+                            }, 1500);
+                        }
+                    }
+                }
+            } else if (avg > threshold) {
+                this.onVoiceSuccess();
+            }
+
             requestAnimationFrame(() => this.voiceLoop());
         },
 
@@ -441,7 +646,8 @@
 
         onSuccess() {
             this.stars++;
-            this.history.push({ date: new Date().toLocaleString(), mode: this.mode, result: 'Succès' });
+            const modeName = this.mode === 'prompt' ? `PROMPT:${this.promptSubMode}` : this.mode;
+            this.history.push({ date: new Date().toLocaleString(), mode: modeName, result: 'Succès' });
             this.triggerConfetti();
             this.updateStarUI();
 
@@ -449,7 +655,17 @@
                 this.stars = 0;
                 this.triggerRewardCycle();
             } else {
-                setTimeout(() => this.pickNewWord(), 1000);
+                setTimeout(() => {
+                    if (this.mode === 'prompt') {
+                        this.voiceHoldCounter = 0;
+                        if (this.promptSubMode === 'ascenseur') {
+                            this.balloonY = 50;
+                            document.getElementById('prompt-balloon').style.bottom = '50%';
+                        }
+                    } else {
+                        this.pickNewWord();
+                    }
+                }, 1000);
             }
             this.save();
         },
