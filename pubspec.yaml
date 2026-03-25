@@ -1,0 +1,31 @@
+name: emie_odyssee
+description: L'Odyssée de l'Île d'Émie - Exercices de souffle et rythme pour Émie.
+version: 1.0.0+1
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  record: ^5.1.0
+  audioplayers: ^5.2.1
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+
+  # fonts:
+  #   - family: OpenDyslexic
+  #     fonts:
+  #       - asset: assets/fonts/OpenDyslexic-Regular.otf
+  #       - asset: assets/fonts/OpenDyslexic-Bold.otf
+  #         weight: 700
