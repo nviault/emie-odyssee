@@ -23,9 +23,14 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # fonts:
-  #   - family: OpenDyslexic
-  #     fonts:
-  #       - asset: assets/fonts/OpenDyslexic-Regular.otf
-  #       - asset: assets/fonts/OpenDyslexic-Bold.otf
-  #         weight: 700
+  fonts:
+    - family: OpenDyslexic
+      fonts:
+        - asset: assets/fonts/OpenDyslexic-Regular.otf
+        - asset: assets/fonts/OpenDyslexic-Bold.otf
+          weight: 700
+        - asset: assets/fonts/OpenDyslexic-Italic.otf
+          style: italic
+        - asset: assets/fonts/OpenDyslexic-BoldItalic.otf
+          weight: 700
+          style: italic
